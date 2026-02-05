@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: Geo-Service API
+  description: Микросервис для сохранения и поиска географических точек с использованием PostGIS.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер разработки
+
+paths:
+  /points:
+    put:
+      summary: Добавить новую точку
+      tags:
+        - Points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PointInput'
+      responses:
+        '201':
+          description: Точка успешно создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          description: Ошибка валидации (некорректные координаты или пустое имя)
+        '500':
+          description: Ошибка базы данных
+
+  /points/{left}/{top}/{right}/{bottom}:
+    get:
+      summary: Получить точки в прямоугольной области (Bounding Box)
+      tags:
+        - Points
+      parameters:
+        - name: left
+          in: path
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Минимальная долгота (левая граница)
+        - name: right
+          in: path
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Максимальная долгота (правая граница)
+        - name: top
+          in: path
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          description: Минимальная широта (нижняя граница)
+        - name: bottom
+          in: path
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          description: Максимальная широта (верхняя граница)
+      responses:
+        '200':
+          description: Список найденных точек
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Point'
+        '400':
+          description: Некорректные параметры запроса или логическая ошибка границ
+        '500':
+          description: Ошибка выполнения запроса
+
+components:
+  schemas:
+    PointInput:
+      type: object
+      required:
+        - name
+        - lat
+        - lon
+      properties:
+        name:
+          type: string
+          example: "Красная площадь"
+        lat:
+          type: number
+          format: float
+          example: 55.7539
+          description: Широта [-90, 90]
+        lon:
+          type: number
+          format: float
+          example: 37.6208
+          description: Долгота [-180, 180]
+
+    Point:
+      allOf:
+        - $ref: '#/components/schemas/PointInput'
+        - type: object
+          properties:
+            id:
+              type: integer
+              example: 1
