@@ -1,7 +1,9 @@
 package geo
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -59,7 +61,7 @@ func Float64(r *http.Request, key string, min, max float64) (float64, error) {
 	return val, nil
 }
 
-func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Box(w http.ResponseWriter, r *http.Request) {
 	x1, err1 := Float64(r, "left", -180, 180)
 	y1, err2 := Float64(r, "top", -90, 90)
 	x2, err3 := Float64(r, "right", -180, 180)
@@ -90,4 +92,36 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(points)
+}
+
+func Int32(r *http.Request, key string) (int32, error) {
+	value := chi.URLParam(r, key)
+
+	val, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("param %s is invalid: %w", key, err)
+	}
+
+	return int32(val), nil
+}
+
+func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
+	id, err := Int32(r, "id")
+	if err != nil {
+		http.Error(w, fmt.Sprintln("Invalid id: ", err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	point, err := s.GetPoint(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(point)
 }

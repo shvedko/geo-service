@@ -28,6 +28,31 @@ func (q *Queries) AddPoint(ctx context.Context, arg AddPointParams) (int32, erro
 	return id, err
 }
 
+const getPoint = `-- name: GetPoint :one
+SELECT id, title AS name, st_x(point)::float8 AS lon, st_y(point)::float8 AS lat
+FROM points
+WHERE id = $1
+`
+
+type GetPointRow struct {
+	ID   int32   `json:"id"`
+	Name string  `json:"name"`
+	Lon  float64 `json:"lon"`
+	Lat  float64 `json:"lat"`
+}
+
+func (q *Queries) GetPoint(ctx context.Context, id int32) (GetPointRow, error) {
+	row := q.db.QueryRow(ctx, getPoint, id)
+	var i GetPointRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Lon,
+		&i.Lat,
+	)
+	return i, err
+}
+
 const getPointsFromBox = `-- name: GetPointsFromBox :many
 SELECT id, title AS name, st_x(point)::float8 AS lon, st_y(point)::float8 AS lat
 FROM points

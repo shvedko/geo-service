@@ -107,7 +107,8 @@ func run(ctx context.Context, addr string, port string, base string) error {
 
 	h := chi.NewRouter()
 	h.Post("/points", g.Post)
-	h.Get("/points/{left:"+float+"}/{top:"+float+"}/{right:"+float+"}/{bottom:"+float+"}", g.Get)
+	h.Get("/points/{id:[0-9]+}", g.Get)
+	h.Get("/points/{left:"+float+"}/{top:"+float+"}/{right:"+float+"}/{bottom:"+float+"}", g.Box)
 	s := http.Server{
 		Handler:     h,
 		Addr:        net.JoinHostPort(addr, port),
