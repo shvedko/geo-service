@@ -106,7 +106,7 @@ func run(ctx context.Context, addr string, port string, base string) error {
 	const float = "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"
 
 	h := chi.NewRouter()
-	h.Put("/points", g.Put)
+	h.Post("/points", g.Post)
 	h.Get("/points/{left:"+float+"}/{top:"+float+"}/{right:"+float+"}/{bottom:"+float+"}", g.Get)
 	s := http.Server{
 		Handler:     h,

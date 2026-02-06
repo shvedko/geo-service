@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -21,7 +22,7 @@ func New(db repository.DBTX) (*Service, error) {
 	}, nil
 }
 
-func (s *Service) Put(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Post(w http.ResponseWriter, r *http.Request) {
 	var p repository.AddPointParams
 
 	err := json.NewDecoder(r.Body).Decode(&p)
@@ -33,12 +34,13 @@ func (s *Service) Put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.AddPoint(r.Context(), p)
+	id, err := s.AddPoint(r.Context(), p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Location", path.Join(r.RequestURI, fmt.Sprint(id)))
 	w.WriteHeader(http.StatusCreated)
 }
 

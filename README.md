@@ -39,12 +39,12 @@ docker compose up --build
 ## API Эндпоинты
 
 ### 1. Создание точки
-**PUT** /points
+**POST** /points
 
 Добавляет новую географическую точку.
 
 ```bash
-curl -X PUT http://localhost:8080/points \
+curl -X POST http://localhost:8080/points \
 -H "Content-Type: application/json" \
 -d '{"name": "Eiffel Tower", "lat": 48.8584, "lon": 2.2945}'
 ```

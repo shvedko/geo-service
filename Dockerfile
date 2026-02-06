@@ -4,6 +4,7 @@ WORKDIR /source
 COPY go.mod .
 RUN go mod download
 COPY . .
+RUN sqlc generate
 RUN CGO_ENABLED=0 go build -o main -ldflags="-s -w" ./cmd/geo/main.go
 
 FROM scratch
