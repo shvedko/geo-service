@@ -5,13 +5,17 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/go-chi/chi/v5"
 
@@ -20,10 +24,44 @@ import (
 	"github.com/shvedko/geo-service/internal/service/geo"
 )
 
+type Config struct {
+	BindAddr    string `default:"" split_words:"true" desc:"bind address"`
+	BindPort    string `default:"8080" split_words:"true" desc:"bind port"`
+	DatabaseURL string `default:"postgres://postgres:postgres@postgres:5432/geo" split_words:"true" desc:"data base url"`
+}
+
+type Redacted struct {
+	s *string
+}
+
+func (r Redacted) String() string {
+	u, err := url.Parse(*r.s)
+	if err != nil {
+		return ""
+	}
+	return u.Redacted()
+}
+
+func (r Redacted) Set(s string) error {
+	*r.s = s
+	return nil
+}
+
+func (r Redacted) Type() string {
+	return "string"
+}
+
+func URL(s *string) pflag.Value {
+	return Redacted{s: s}
+}
+
 func main() {
-	var addrFlag string
-	var portFlag string
-	var baseFlag string
+	var cfg Config
+	err := envconfig.Process("", &cfg)
+	if err != nil {
+		_ = envconfig.Usage("", &cfg)
+		os.Exit(1)
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -32,7 +70,7 @@ func main() {
 		Use:  "geo",
 		Long: "Geo Bounding Box Service",
 		RunE: func(*cobra.Command, []string) error {
-			err := run(ctx, addrFlag, portFlag, baseFlag)
+			err := run(ctx, cfg.BindAddr, cfg.BindPort, cfg.DatabaseURL)
 			switch {
 			case errors.Is(err, http.ErrServerClosed):
 				return nil
@@ -42,11 +80,11 @@ func main() {
 		},
 	}
 
-	c.Flags().StringVar(&addrFlag, "addr", "", "bind address")
-	c.Flags().StringVar(&portFlag, "port", "8080", "bind port")
-	c.Flags().StringVar(&baseFlag, "db", "postgres://postgres:postgres@postgres:5432/geo", "data base")
+	c.Flags().StringVar(&cfg.BindAddr, "addr", cfg.BindAddr, "bind address")
+	c.Flags().StringVar(&cfg.BindPort, "port", cfg.BindPort, "bind port")
+	c.Flags().Var(URL(&cfg.DatabaseURL), "base", "data base url")
 
-	err := c.Execute()
+	err = c.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
