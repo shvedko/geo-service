@@ -21,7 +21,7 @@ func New(db repository.DBTX) (*Service, error) {
 	}, nil
 }
 
-func (s *Service) Put(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Post(w http.ResponseWriter, r *http.Request) {
 	var p repository.AddPointParams
 
 	err := json.NewDecoder(r.Body).Decode(&p)

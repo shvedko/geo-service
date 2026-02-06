@@ -9,7 +9,7 @@ servers:
 
 paths:
   /points:
-    put:
+    post:
       summary: Добавить новую точку
       tags:
         - Points
