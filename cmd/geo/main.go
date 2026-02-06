@@ -116,11 +116,11 @@ func run(ctx context.Context, addr string, port string, base string) error {
 
 	e := make(chan error, 1)
 
-	context.AfterFunc(ctx, func() {
+	defer context.AfterFunc(ctx, func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		e <- s.Shutdown(ctx)
-	})
+	})()
 
 	err = s.ListenAndServe()
 	if err != http.ErrServerClosed {
