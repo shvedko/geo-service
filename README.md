@@ -75,8 +75,8 @@ curl http://localhost:8080/points/2.0/3.0/48.0/49.0
 
 Схема для создания БД: 
     
-        sql/schema/geo.sql
+[sql/schema/geo.sql](sql/schema/geo.sql)
 
 Спецификация OpenAPI:
 
-        doc/swagger.yaml
+[doc/swagger.yaml](doc/swagger.yaml)
