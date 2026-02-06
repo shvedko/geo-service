@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -70,13 +68,7 @@ func main() {
 		Use:  "geo",
 		Long: "Geo Bounding Box Service",
 		RunE: func(*cobra.Command, []string) error {
-			err := run(ctx, cfg.BindAddr, cfg.BindPort, cfg.DatabaseURL.String())
-			switch {
-			case errors.Is(err, http.ErrServerClosed):
-				return nil
-			default:
-				return err
-			}
+			return run(ctx, cfg.BindAddr, cfg.BindPort, cfg.DatabaseURL.String())
 		},
 	}
 
@@ -122,16 +114,18 @@ func run(ctx context.Context, addr string, port string, base string) error {
 		BaseContext: func(net.Listener) context.Context { return ctx },
 	}
 
-	w := sync.WaitGroup{}
-	defer w.Wait()
+	e := make(chan error, 1)
 
 	context.AfterFunc(ctx, func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
-		w.Add(1)
-		defer w.Done()
-		_ = s.Shutdown(ctx)
+		e <- s.Shutdown(ctx)
 	})
 
-	return s.ListenAndServe()
+	err = s.ListenAndServe()
+	if err != http.ErrServerClosed {
+		return err
+	}
+
+	return <-e
 }
