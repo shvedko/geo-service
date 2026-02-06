@@ -4,7 +4,7 @@
 
 ## Функциональность
 
-*   **REST API** для создания и поиска гео-объектов.
+*   **REST API**: для создания и поиска гео-объектов.
 *   **PostGIS Интеграция**: использование пространственных индексов GIST + CLUSTER для быстрого поиска.
 *   **Строгая валидация**: проверка координат на вхождение в диапазоны WGS84 (Широта: [-90, 90], Долгота: [-180, 180]).
 *   **Docker-native**: готов к развертыванию через Docker Compose.
@@ -75,8 +75,8 @@ curl http://localhost:8080/points/2.0/3.0/48.0/49.0
 
 Схема для создания БД: 
     
-        sql/schema/geo.sql
+[sql/schema/geo.sql](sql/schema/geo.sql)
 
 Спецификация OpenAPI:
 
-        doc/swagger.yaml
+[doc/swagger.yaml](doc/swagger.yaml)
