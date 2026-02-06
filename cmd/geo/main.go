@@ -25,34 +25,34 @@ import (
 )
 
 type Config struct {
-	BindAddr    string `default:"" split_words:"true" desc:"bind address"`
-	BindPort    string `default:"8080" split_words:"true" desc:"bind port"`
-	DatabaseURL string `default:"postgres://postgres:postgres@postgres:5432/geo" split_words:"true" desc:"data base url"`
+	BindAddr    string  `default:"" split_words:"true" desc:"bind address"`
+	BindPort    string  `default:"8080" split_words:"true" desc:"bind port"`
+	DatabaseURL url.URL `default:"postgres://postgres:postgres@postgres:5432/geo" split_words:"true" desc:"data base url"`
 }
 
-type Redacted struct {
-	s *string
+type RedactedURL struct {
+	u *url.URL
 }
 
-func (r Redacted) String() string {
-	u, err := url.Parse(*r.s)
+func (r RedactedURL) String() string {
+	return r.u.Redacted()
+}
+
+func (r RedactedURL) Set(s string) error {
+	u, err := url.Parse(s)
 	if err != nil {
-		return ""
+		return err
 	}
-	return u.Redacted()
-}
-
-func (r Redacted) Set(s string) error {
-	*r.s = s
+	*r.u = *u
 	return nil
 }
 
-func (r Redacted) Type() string {
+func (r RedactedURL) Type() string {
 	return "string"
 }
 
-func URL(s *string) pflag.Value {
-	return Redacted{s: s}
+func URL(u *url.URL) pflag.Value {
+	return RedactedURL{u: u}
 }
 
 func main() {
@@ -70,7 +70,7 @@ func main() {
 		Use:  "geo",
 		Long: "Geo Bounding Box Service",
 		RunE: func(*cobra.Command, []string) error {
-			err := run(ctx, cfg.BindAddr, cfg.BindPort, cfg.DatabaseURL)
+			err := run(ctx, cfg.BindAddr, cfg.BindPort, cfg.DatabaseURL.String())
 			switch {
 			case errors.Is(err, http.ErrServerClosed):
 				return nil
@@ -90,8 +90,6 @@ func main() {
 	}
 }
 
-const float = "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"
-
 func run(ctx context.Context, addr string, port string, base string) error {
 	db, err := pgxpool.New(ctx, base)
 	if err != nil {
@@ -99,10 +97,21 @@ func run(ctx context.Context, addr string, port string, base string) error {
 	}
 	defer db.Close()
 
+	{
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		err := db.Ping(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
 	g, err := geo.New(db)
 	if err != nil {
 		return err
 	}
+
+	const float = "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"
 
 	h := chi.NewRouter()
 	h.Put("/points"+"", g.Put)
