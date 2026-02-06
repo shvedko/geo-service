@@ -9,9 +9,10 @@ import (
 	"context"
 )
 
-const addPoint = `-- name: AddPoint :exec
+const addPoint = `-- name: AddPoint :one
 INSERT INTO points (title, point) -- lon/lat (X/Y)
 VALUES ($1, st_setsrid(st_makepoint($2::float8, $3::float8), 4326))
+RETURNING id
 `
 
 type AddPointParams struct {
@@ -20,13 +21,15 @@ type AddPointParams struct {
 	Lat  float64 `json:"lat"`
 }
 
-func (q *Queries) AddPoint(ctx context.Context, arg AddPointParams) error {
-	_, err := q.db.Exec(ctx, addPoint, arg.Name, arg.Lon, arg.Lat)
-	return err
+func (q *Queries) AddPoint(ctx context.Context, arg AddPointParams) (int32, error) {
+	row := q.db.QueryRow(ctx, addPoint, arg.Name, arg.Lon, arg.Lat)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getPointsFromBox = `-- name: GetPointsFromBox :many
-SELECT id, title AS name, st_y(point)::float8 AS lat, st_x(point)::float8 AS lon
+SELECT id, title AS name, st_x(point)::float8 AS lon, st_y(point)::float8 AS lat
 FROM points
 WHERE point && st_makeenvelope($1::float8, $2::float8, $3::float8, $4::float8, 4326)
 `
@@ -41,8 +44,8 @@ type GetPointsFromBoxParams struct {
 type GetPointsFromBoxRow struct {
 	ID   int32   `json:"id"`
 	Name string  `json:"name"`
-	Lat  float64 `json:"lat"`
 	Lon  float64 `json:"lon"`
+	Lat  float64 `json:"lat"`
 }
 
 func (q *Queries) GetPointsFromBox(ctx context.Context, arg GetPointsFromBoxParams) ([]GetPointsFromBoxRow, error) {
@@ -62,8 +65,8 @@ func (q *Queries) GetPointsFromBox(ctx context.Context, arg GetPointsFromBoxPara
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.Lat,
 			&i.Lon,
+			&i.Lat,
 		); err != nil {
 			return nil, err
 		}
