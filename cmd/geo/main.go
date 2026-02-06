@@ -98,7 +98,7 @@ func run(ctx context.Context, addr string, port string, base string) error {
 	defer db.Close()
 
 	{
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, time.Minute)
 		defer cancel()
 		err := db.Ping(ctx)
 		if err != nil {
@@ -114,7 +114,7 @@ func run(ctx context.Context, addr string, port string, base string) error {
 	const float = "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"
 
 	h := chi.NewRouter()
-	h.Put("/points"+"", g.Put)
+	h.Put("/points", g.Put)
 	h.Get("/points/{left:"+float+"}/{top:"+float+"}/{right:"+float+"}/{bottom:"+float+"}", g.Get)
 	s := http.Server{
 		Handler:     h,
