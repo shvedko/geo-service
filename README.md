@@ -69,7 +69,7 @@ curl http://localhost:8080/points/2.0/3.0/48.0/49.0
 Для запуска вне Docker используйте флаги командной строки:
 
         --addr string   bind address
-        --db string     data base (default "postgres://postgres:postgres@postgres:5432/geo")
+        --base string   data base (default "postgres://postgres:postgres@postgres:5432/geo")
     -h, --help          help for geo
         --port string   bind port (default "8080")
 
