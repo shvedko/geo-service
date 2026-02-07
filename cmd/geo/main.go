@@ -19,6 +19,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/shvedko/geo-service/doc"
 	"github.com/shvedko/geo-service/internal/service/geo"
 )
 
@@ -109,6 +110,7 @@ func run(ctx context.Context, addr string, port string, base string) error {
 	h.Post("/points", g.Post)
 	h.Get("/points/{id:[0-9]+}", g.Get)
 	h.Get("/points/{min_lon:"+float+"}/{min_lat:"+float+"}/{max_lon:"+float+"}/{max_lat:"+float+"}", g.Box)
+	h.Get("/swagger.yaml", doc.Swagger.ServeHTTP)
 	s := http.Server{
 		Handler:     h,
 		Addr:        net.JoinHostPort(addr, port),

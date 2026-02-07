@@ -22,26 +22,18 @@ paths:
       responses:
         '201':
           description: Точка успешно создана
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
         '400':
           description: Ошибка валидации (некорректные координаты или пустое имя)
         '500':
           description: Ошибка базы данных
 
-  /points/{left}/{top}/{right}/{bottom}:
+  /points/{min_lon}/{min_lat}/{max_lon}/{max_lat}:
     get:
       summary: Получить точки в прямоугольной области (Bounding Box)
       tags:
         - Points
       parameters:
-        - name: left
+        - name: min_lon
           in: path
           required: true
           schema:
@@ -50,16 +42,7 @@ paths:
             minimum: -180
             maximum: 180
           description: Минимальная долгота (левая граница)
-        - name: right
-          in: path
-          required: true
-          schema:
-            type: number
-            format: float
-            minimum: -180
-            maximum: 180
-          description: Максимальная долгота (правая граница)
-        - name: top
+        - name: min_lat
           in: path
           required: true
           schema:
@@ -68,7 +51,16 @@ paths:
             minimum: -90
             maximum: 90
           description: Минимальная широта (нижняя граница)
-        - name: bottom
+        - name: max_lon
+          in: path
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Максимальная долгота (правая граница)
+        - name: max_lat
           in: path
           required: true
           schema:
