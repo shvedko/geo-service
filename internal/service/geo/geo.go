@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
 
 	"github.com/shvedko/geo-service/internal/repository"
 )
@@ -25,18 +22,18 @@ func New(db repository.DBTX) (*Service, error) {
 }
 
 func (s *Service) Post(w http.ResponseWriter, r *http.Request) {
-	var p repository.AddPointParams
+	var point repository.AddPointParams
 
-	err := json.NewDecoder(r.Body).Decode(&p)
+	err := json.NewDecoder(r.Body).Decode(&point)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} else if !p.IsValid() {
-		http.Error(w, "Invalid coordinates or empty name. Lat: [-90, 90], Lon: [-180, 180]", http.StatusBadRequest)
+	} else if !point.IsValid() {
+		http.Error(w, "empty name or invalid lat/lon", http.StatusBadRequest)
 		return
 	}
 
-	id, err := s.AddPoint(r.Context(), p)
+	id, err := s.AddPoint(r.Context(), point)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -46,45 +43,19 @@ func (s *Service) Post(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func Float64(r *http.Request, key string, min, max float64) (float64, error) {
-	value := chi.URLParam(r, key)
-
-	val, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return 0, fmt.Errorf("param %s is invalid: %w", key, err)
-	}
-
-	if val < min || val > max {
-		return 0, fmt.Errorf("param %s out of range [%.f, %.f]", key, min, max)
-	}
-
-	return val, nil
-}
-
 func (s *Service) Box(w http.ResponseWriter, r *http.Request) {
-	x1, err1 := Float64(r, "left", -180, 180)
-	y1, err2 := Float64(r, "top", -90, 90)
-	x2, err3 := Float64(r, "right", -180, 180)
-	y2, err4 := Float64(r, "bottom", -90, 90)
+	var box repository.GetPointsFromBoxParams
 
-	for _, err := range []error{err1, err2, err3, err4} {
-		if err != nil {
-			http.Error(w, fmt.Sprintln("Invalid coordinate range:", err.Error()), http.StatusBadRequest)
-			return
-		}
-	}
-
-	if x1 > x2 || y1 > y2 {
-		http.Error(w, "Invalid coordinate range: left/top must be less than right/bottom", http.StatusBadRequest)
+	err := Decode(r, &box)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} else if !box.IsValid() {
+		http.Error(w, "min_lon/min_lat must be valid and less than max_lon/max_lat", http.StatusBadRequest)
 		return
 	}
 
-	points, err := s.GetPointsFromBox(r.Context(), repository.GetPointsFromBoxParams{
-		Lon1: x1,
-		Lat1: y1,
-		Lon2: x2,
-		Lat2: y2,
-	})
+	points, err := s.GetPointsFromBox(r.Context(), box)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -94,28 +65,19 @@ func (s *Service) Box(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(points)
 }
 
-func Int32(r *http.Request, key string) (int32, error) {
-	value := chi.URLParam(r, key)
-
-	val, err := strconv.ParseInt(value, 10, 32)
-	if err != nil {
-		return 0, fmt.Errorf("param %s is invalid: %w", key, err)
-	}
-
-	return int32(val), nil
-}
-
 func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
-	id, err := Int32(r, "id")
+	var point repository.GetPointRow
+
+	err := Decode(r, &point)
 	if err != nil {
-		http.Error(w, fmt.Sprintln("Invalid id: ", err.Error()), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	point, err := s.GetPoint(r.Context(), id)
+	point, err = s.GetPoint(r.Context(), point.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			w.WriteHeader(http.StatusNotFound)
+			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -60,10 +60,10 @@ WHERE point && st_makeenvelope($1::float8, $2::float8, $3::float8, $4::float8, 4
 `
 
 type GetPointsFromBoxParams struct {
-	Lon1 float64 `json:"lon1"`
-	Lat1 float64 `json:"lat1"`
-	Lon2 float64 `json:"lon2"`
-	Lat2 float64 `json:"lat2"`
+	MinLon float64 `json:"min_lon"`
+	MinLat float64 `json:"min_lat"`
+	MaxLon float64 `json:"max_lon"`
+	MaxLat float64 `json:"max_lat"`
 }
 
 type GetPointsFromBoxRow struct {
@@ -75,10 +75,10 @@ type GetPointsFromBoxRow struct {
 
 func (q *Queries) GetPointsFromBox(ctx context.Context, arg GetPointsFromBoxParams) ([]GetPointsFromBoxRow, error) {
 	rows, err := q.db.Query(ctx, getPointsFromBox,
-		arg.Lon1,
-		arg.Lat1,
-		arg.Lon2,
-		arg.Lat2,
+		arg.MinLon,
+		arg.MinLat,
+		arg.MaxLon,
+		arg.MaxLat,
 	)
 	if err != nil {
 		return nil, err
