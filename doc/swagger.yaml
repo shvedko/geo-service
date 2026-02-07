@@ -6,7 +6,6 @@ info:
 servers:
   - url: http://localhost:8080
     description: Локальный сервер разработки
-
 paths:
   /points:
     post:
@@ -22,11 +21,16 @@ paths:
       responses:
         '201':
           description: Точка успешно создана
+          headers:
+            Location:
+              description: URL созданной точки
+              schema:
+                type: string
+                format: uri
         '400':
           description: Ошибка валидации (некорректные координаты или пустое имя)
         '500':
           description: Ошибка базы данных
-
   /points/{min_lon}/{min_lat}/{max_lon}/{max_lat}:
     get:
       summary: Получить точки в прямоугольной области (Bounding Box)
@@ -82,7 +86,6 @@ paths:
           description: Некорректные параметры запроса или логическая ошибка границ
         '500':
           description: Ошибка выполнения запроса
-
 components:
   schemas:
     PointInput:
@@ -105,7 +108,6 @@ components:
           format: float
           example: 37.6208
           description: Долгота [-180, 180]
-
     Point:
       allOf:
         - $ref: '#/components/schemas/PointInput'
