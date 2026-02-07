@@ -26,7 +26,7 @@ import (
 type Config struct {
 	BindAddr    string  `default:"" split_words:"true" desc:"bind address"`
 	BindPort    string  `default:"8080" split_words:"true" desc:"bind port"`
-	DatabaseURL url.URL `default:"postgres://postgres:postgres@postgres:5432/geo" split_words:"true" desc:"data base url"`
+	DatabaseURL url.URL `default:"postgres://postgres:postgres@postgres:5432/geo" split_words:"true" desc:"data base"`
 }
 
 type RedactedURL struct {
@@ -75,7 +75,7 @@ func main() {
 
 	c.Flags().StringVar(&cfg.BindAddr, "addr", cfg.BindAddr, "bind address")
 	c.Flags().StringVar(&cfg.BindPort, "port", cfg.BindPort, "bind port")
-	c.Flags().Var(URL(&cfg.DatabaseURL), "base", "data base url")
+	c.Flags().Var(URL(&cfg.DatabaseURL), "base", "data base")
 
 	err = c.Execute()
 	if err != nil {
