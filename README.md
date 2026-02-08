@@ -77,6 +77,15 @@ curl http://localhost:8080/points/2.0/3.0/48.0/49.0
     
 [sql/schema/geo.sql](sql/schema/geo.sql)
 
+Обслуживание БД:
+
+- `CLUSTER points USING points_point_idx`
+
+или
+
+- `CREATE EXTENSION pg_repack`
+- `pg_repack -d geo -t points --order-by point`
+
 Спецификация OpenAPI:
 
 [doc/swagger.yaml](doc/swagger.yaml)
