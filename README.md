@@ -80,3 +80,7 @@ curl http://localhost:8080/points/2.0/3.0/48.0/49.0
 Спецификация OpenAPI:
 
 [doc/swagger.yaml](doc/swagger.yaml)
+
+или
+
+[http://localhost:8080/swagger.yaml](http://localhost:8080/swagger.yaml)

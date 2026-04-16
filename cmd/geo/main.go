@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -107,6 +108,9 @@ func run(ctx context.Context, addr string, port string, base string) error {
 	const float = "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"
 
 	h := chi.NewRouter()
+	h.Use(middleware.Logger)
+	h.Use(middleware.Recoverer)
+	h.Use(middleware.RealIP)
 	h.Post("/points", g.Post)
 	h.Get("/points/{id:[0-9]+}", g.Get)
 	h.Get("/points/{min_lon:"+float+"}/{min_lat:"+float+"}/{max_lon:"+float+"}/{max_lat:"+float+"}", g.Box)
